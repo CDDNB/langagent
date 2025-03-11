@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>德语学习文档处理</title>
+</head>
+<body>
+    <h2>上传文件，生成 Markdown</h2>
+    <input type="file" id="fileInput">
+    <button onclick="uploadFile()">上传并处理</button>
+    <a id="downloadLink" style="display:none;">下载 Markdown 文件</a>
+
+    <script>
+        function uploadFile() {
+            let fileInput = document.getElementById("fileInput");
+            let file = fileInput.files[0];
+            if (!file) {
+                alert("请选择文件！");
+                return;
+            }
+
+            let formData = new FormData();
+            formData.append("file", file);
+
+            fetch("https://1257663059-2naqru8396.ap-shanghai.tencentscf.com:9000/upload", {
+                method: "POST",
+                mode: "cors",
+                headers: {
+                    "Accept": "application/json",
+                },
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.download_url) {
+                    let downloadLink = document.getElementById("downloadLink");
+                    downloadLink.href = data.download_url;
+                    downloadLink.style.display = "block";
+                    downloadLink.innerText = "下载 Markdown 文件";
+                    alert("下载链接：" + data.download_url);  // 添加这行来显示下载链接
+                } else {
+                    alert("转换失败：" + data.error);
+                }
+            })
+            .catch(error => alert("处理失败：" + error));
+        }
+    </script>
+</body>
+</html>
