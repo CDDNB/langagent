@@ -32,7 +32,7 @@ class MindMapGenerator:
         """
 
         response = self.client.chat.completions.create(
-            model="qwen-plus",
+            model="qwen-max",
             messages=[{"role": "user", "content": prompt}]
         )
         content = response.choices[0].message.content.strip()
@@ -67,7 +67,7 @@ class MindMapGenerator:
         return mm_code
 
     def export_image(self, format='png'):
-        """导出可视化文件"""
+        """导出可视化文件并返回文件路径"""
         dot = Digraph()
         dot.node('A', self.structure["核心论点"])
         
@@ -81,4 +81,9 @@ class MindMapGenerator:
                 dot.node(sub_id, sub)
                 dot.edge(branch_id, sub_id)
         
-        dot.render(f'mindmap', format=format, cleanup=True)
+        # 指定输出路径到 images 目录
+        output_path = '/Users/cdd/Desktop/LangAgent/LangAgent_test/images/mindmap'
+        # 生成图片并返回文件路径
+        output_file = dot.render(output_path, format=format, cleanup=True)
+        return output_file
+        

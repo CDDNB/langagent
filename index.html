@@ -3,48 +3,538 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>德语学习文档处理</title>
+    <title>德语学习文档处理（等待约3-5分钟）</title>
+    <style>
+        /* 基础样式 */
+        :root {
+            --primary-color: #3498db;
+            --primary-hover: #2980b9;
+            --success-color: #2ecc71;
+            --success-hover: #27ae60;
+            --disabled-color: #bdc3c7;
+            --text-color: #2c3e50;
+            --border-radius: 5px;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+
+        /* 容器样式 */
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        h2, h3 {
+            color: var(--text-color);
+            margin-bottom: 20px;
+        }
+
+        h2 {
+            text-align: center;
+        }
+
+        /* 上传区域样式 */
+        .upload-area {
+            border: 2px dashed var(--primary-color);
+            border-radius: 8px;
+            padding: 40px;
+            text-align: center;
+            margin-bottom: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .upload-area:hover { border-color: var(--primary-hover); }
+        .upload-area.dragover { border-color: var(--primary-hover); }
+        #fileInput { display: none; }
+
+        /* 按钮样式 */
+        .btn {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+            margin-right: 10px;
+        }
+
+        .btn:hover { background-color: var(--primary-hover); }
+        .btn:disabled {
+            background-color: var(--disabled-color);
+            cursor: not-allowed;
+        }
+
+        /* 下载链接样式 */
+        #downloadLink {
+            display: none;
+            text-decoration: none;
+            background-color: var(--success-color);
+            color: white;
+            padding: 12px 24px;
+            border-radius: var(--border-radius);
+            margin-top: 20px;
+            transition: background-color 0.3s ease;
+        }
+
+        #downloadLink:hover { background-color: var(--success-hover); }
+
+        /* 进度条样式 */
+        .progress {
+            display: none;
+            width: 100%;
+            height: 6px;
+            background-color: #ecf0f1;
+            border-radius: 3px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            width: 0%;
+            height: 100%;
+            background-color: var(--primary-color);
+            transition: width 0.3s ease;
+        }
+
+        /* 文本样式 */
+        #fileName, .file-types {
+            margin-top: 10px;
+            color: #7f8c8d;
+            font-size: 14px;
+        }
+
+        /* 结果区域样式 */
+        .result-section {
+            display: none;
+            margin-top: 30px;
+        }
+
+        .result-container {
+            border: 1px solid #e0e0e0;
+            border-radius: 5px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .result-container h3 {
+            margin-top: 0;
+            border-bottom: 1px solid #e0e0e0;
+            padding-bottom: 10px;
+        }
+
+        .tab-container {
+            margin-top: 20px;
+        }
+
+        .tab-buttons {
+            display: flex;
+            border-bottom: 1px solid #e0e0e0;
+            margin-bottom: 15px;
+        }
+
+        .tab-button {
+            padding: 10px 20px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            color: var(--text-color);
+            opacity: 0.7;
+        }
+
+        .tab-button.active {
+            opacity: 1;
+            border-bottom: 2px solid var(--primary-color);
+        }
+
+        .tab-content {
+            display: none;
+            padding: 10px;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* 思维导图样式 */
+        .mindmap-image {
+            max-width: 100%;
+            margin-bottom: 20px;
+        }
+
+        /* 代码块样式 */
+        pre {
+            background-color: #f8f8f8;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+
+        /* 响应式样式 */
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            
+            .upload-area {
+                padding: 20px;
+            }
+            
+            .btn {
+                padding: 10px 15px;
+                font-size: 14px;
+            }
+        }
+    </style>
 </head>
 <body>
-    <h2>上传文件，生成 Markdown</h2>
-    <input type="file" id="fileInput">
-    <button onclick="uploadFile()">上传并处理</button>
-    <a id="downloadLink" style="display:none;">下载 Markdown 文件</a>
+    <div class="container">
+        <h2>德语学习文档处理</h2>
+        <div class="upload-area" id="dropZone">
+            <p>拖拽文件到此处或点击选择文件</p>
+            <input type="file" id="fileInput" accept=".docx,.doc,.pdf,.txt">
+            <p class="file-types">支持的文件类型: .docx, .doc, .pdf, .txt</p>
+            <div id="fileName"></div>
+        </div>
+        <div class="progress">
+            <div class="progress-bar"></div>
+        </div>
+        <button class="btn" id="uploadBtn" disabled>上传并处理</button>
+    </div>
+
+    <!-- 结果展示区域 -->
+    <div class="result-section" id="resultSection">
+        <div class="container">
+            <h2>处理结果</h2>
+            
+            <div class="tab-container">
+                <div class="tab-buttons">
+                    <button class="tab-button active" data-tab="mindmap">思维导图</button>
+                    <button class="tab-button" data-tab="translation">翻译</button>
+                    <button class="tab-button" data-tab="reading">阅读理解</button>
+                    <button class="tab-button" data-tab="vocabulary">词汇表</button>
+                </div>
+                
+                <div class="tab-content active" id="mindmapTab">
+                    <div class="result-container">
+                        <h3>思维导图</h3>
+                        <img id="mindmapImage" class="mindmap-image" src="" alt="思维导图">
+                        <h4>Mermaid 代码</h4>
+                        <pre id="mermaidCode"></pre>
+                    </div>
+                </div>
+                
+                <div class="tab-content" id="translationTab">
+                    <div class="result-container">
+                        <h3>翻译</h3>
+                        <div id="translationContent"></div>
+                    </div>
+                </div>
+                
+                <div class="tab-content" id="readingTab">
+                    <div class="result-container">
+                        <h3>阅读理解</h3>
+                        <div id="readingContent"></div>
+                    </div>
+                </div>
+                
+                <div class="tab-content" id="vocabularyTab">
+                    <div class="result-container">
+                        <h3>词汇表</h3>
+                        <div id="vocabularyContent"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <button class="btn" id="generateMarkdownBtn">生成 Markdown 文件</button>
+            <a id="downloadLink">下载 Markdown 文件</a>
+        </div>
+    </div>
 
     <script>
-        function uploadFile() {
-            let fileInput = document.getElementById("fileInput");
-            let file = fileInput.files[0];
-            if (!file) {
-                alert("请选择文件！");
-                return;
+        // 配置对象
+        const CONFIG = {
+            API_URL: 'http://43.142.81.158:9000/upload',
+            GENERATE_MD_URL: 'http://43.142.81.158:9000/generate-markdown',
+            //API_URL: 'http://localhost:9000/upload',
+            //GENERATE_MD_URL: 'http://localhost:9000/generate-markdown',
+            VALID_TYPES: [
+                'application/pdf',
+                'application/msword',
+                'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                'text/plain'
+            ]
+        };
+
+        // 文件处理类
+        class FileHandler {
+            constructor() {
+                this.elements = {
+                    dropZone: document.getElementById('dropZone'),
+                    fileInput: document.getElementById('fileInput'),
+                    uploadBtn: document.getElementById('uploadBtn'),
+                    fileName: document.getElementById('fileName'),
+                    progress: document.querySelector('.progress'),
+                    progressBar: document.querySelector('.progress-bar'),
+                    resultSection: document.getElementById('resultSection'),
+                    mindmapImage: document.getElementById('mindmapImage'),
+                    mermaidCode: document.getElementById('mermaidCode'),
+                    translationContent: document.getElementById('translationContent'),
+                    readingContent: document.getElementById('readingContent'),
+                    vocabularyContent: document.getElementById('vocabularyContent'),
+                    generateMarkdownBtn: document.getElementById('generateMarkdownBtn'),
+                    downloadLink: document.getElementById('downloadLink'),
+                    tabButtons: document.querySelectorAll('.tab-button'),
+                    tabContents: document.querySelectorAll('.tab-content')
+                };
+                this.progressInterval = null;
+                this.processedData = null;
+                this.initializeEventListeners();
             }
 
-            let formData = new FormData();
-            formData.append("file", file);
+            initializeEventListeners() {
+                const { dropZone, fileInput, uploadBtn, tabButtons, generateMarkdownBtn } = this.elements;
 
-            fetch("https://1257663059-2naqru8396.ap-shanghai.tencentscf.com:9000/upload", {
-                method: "POST",
-                mode: "cors",
-                headers: {
-                    "Accept": "application/json",
-                },
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.download_url) {
-                    let downloadLink = document.getElementById("downloadLink");
-                    downloadLink.href = data.download_url;
-                    downloadLink.style.display = "block";
-                    downloadLink.innerText = "下载 Markdown 文件";
-                    alert("下载链接：" + data.download_url);  // 添加这行来显示下载链接
+                // 拖放事件
+                dropZone.addEventListener('click', () => fileInput.click());
+                dropZone.addEventListener('dragover', this.handleDragOver.bind(this));
+                dropZone.addEventListener('dragleave', this.handleDragLeave.bind(this));
+                dropZone.addEventListener('drop', this.handleDrop.bind(this));
+
+                // 文件选择事件
+                fileInput.addEventListener('change', this.handleFileSelect.bind(this));
+                
+                // 上传事件
+                uploadBtn.addEventListener('click', this.uploadFile.bind(this));
+                
+                // 标签切换事件
+                tabButtons.forEach(button => {
+                    button.addEventListener('click', this.switchTab.bind(this));
+                });
+                
+                // 生成Markdown事件
+                generateMarkdownBtn.addEventListener('click', this.generateMarkdown.bind(this));
+            }
+
+            handleDragOver(e) {
+                e.preventDefault();
+                this.elements.dropZone.classList.add('dragover');
+            }
+
+            handleDragLeave(e) {
+                e.preventDefault();
+                this.elements.dropZone.classList.remove('dragover');
+            }
+
+            handleDrop(e) {
+                e.preventDefault();
+                this.elements.dropZone.classList.remove('dragover');
+                const files = e.dataTransfer.files;
+                if (files.length) this.processFile(files[0]);
+            }
+
+            handleFileSelect() {
+                const file = this.elements.fileInput.files[0];
+                if (file) this.processFile(file);
+            }
+
+            processFile(file) {
+                if (this.isValidFileType(file)) {
+                    this.updateFileName(file.name);
+                    this.elements.uploadBtn.disabled = false;
                 } else {
-                    alert("转换失败：" + data.error);
+                    alert('不支持的文件类型！请上传 .docx, .doc, .pdf 或 .txt 文件。');
+                    this.resetFileInput();
                 }
-            })
-            .catch(error => alert("处理失败：" + error));
+            }
+
+            isValidFileType(file) {
+                return CONFIG.VALID_TYPES.includes(file.type);
+            }
+
+            updateFileName(name) {
+                this.elements.fileName.textContent = `已选择: ${name}`;
+            }
+
+            resetFileInput() {
+                const { fileInput, fileName, uploadBtn } = this.elements;
+                fileInput.value = '';
+                fileName.textContent = '';
+                uploadBtn.disabled = true;
+            }
+
+            updateProgress(width) {
+                this.elements.progressBar.style.width = width + '%';
+            }
+
+            switchTab(e) {
+                const { tabButtons, tabContents } = this.elements;
+                const tabId = e.target.getAttribute('data-tab');
+                
+                // 更新按钮状态
+                tabButtons.forEach(button => {
+                    button.classList.remove('active');
+                });
+                e.target.classList.add('active');
+                
+                // 更新内容显示
+                tabContents.forEach(content => {
+                    content.classList.remove('active');
+                });
+                document.getElementById(`${tabId}Tab`).classList.add('active');
+            }
+
+            async uploadFile() {
+                const { fileInput, uploadBtn, progress, resultSection } = this.elements;
+                const file = fileInput.files[0];
+                
+                if (!file) {
+                    alert("请选择文件！");
+                    return;
+                }
+
+                uploadBtn.disabled = true;
+                progress.style.display = 'block';
+                this.updateProgress(0);
+
+                this.startProgressSimulation();
+
+                try {
+                    const response = await this.sendFileToServer(file);
+                    this.processedData = response;
+                    this.displayResults(response);
+                    resultSection.style.display = 'block';
+                } catch (error) {
+                    this.handleUploadError(error);
+                } finally {
+                    this.cleanupAfterUpload();
+                }
+            }
+
+            startProgressSimulation() {
+                this.progressInterval = setInterval(() => {
+                    const currentWidth = parseInt(this.elements.progressBar.style.width) || 0;
+                    if (currentWidth < 90) this.updateProgress(currentWidth + 10);
+                }, 500);
+            }
+
+            async sendFileToServer(file) {
+                const formData = new FormData();
+                formData.append("file", file);
+
+                const response = await fetch(CONFIG.API_URL, {
+                    method: "POST",
+                    mode: "cors",
+                    headers: { "Accept": "application/json" },
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || "上传处理失败");
+                }
+
+                return await response.json();
+            }
+
+            displayResults(data) {
+                const { mindmapImage, mermaidCode, translationContent, readingContent, vocabularyContent } = this.elements;
+                
+                // 显示思维导图
+                if (data.mindmap) {
+                    // 添加服务器地址前缀
+                    const serverUrl = 'http://43.142.81.158:9000';
+                    mindmapImage.src = `${serverUrl}${data.mindmap.image_url}`;
+                    mermaidCode.textContent = data.mindmap.mermaid_code;
+                }
+                
+                // 显示翻译
+                if (data.translation) {
+                    translationContent.innerHTML = this.formatMarkdown(data.translation);
+                }
+                
+                // 显示阅读理解
+                if (data.reading_comprehension) {
+                    readingContent.innerHTML = this.formatMarkdown(data.reading_comprehension);
+                }
+                
+                // 显示词汇表
+                if (data.vocabulary) {
+                    vocabularyContent.innerHTML = this.formatMarkdown(data.vocabulary);
+                }
+            }
+
+            formatMarkdown(text) {
+                // 简单的Markdown格式转换为HTML
+                return text
+                    .replace(/\n/g, '<br>')
+                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                    .replace(/\*(.*?)\*/g, '<em>$1</em>');
+            }
+
+            handleUploadError(error) {
+                alert(error.message || "上传失败，请重试");
+                this.resetFileInput();
+            }
+
+            cleanupAfterUpload() {
+                clearInterval(this.progressInterval);
+                this.updateProgress(100);
+                setTimeout(() => {
+                    this.elements.progress.style.display = 'none';
+                    this.elements.uploadBtn.disabled = false;
+                }, 500);
+            }
+
+            async generateMarkdown() {
+                if (!this.processedData) {
+                    alert("请先上传并处理文件！");
+                    return;
+                }
+
+                try {
+                    const response = await fetch(CONFIG.GENERATE_MD_URL, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(this.processedData)
+                    });
+
+                    if (!response.ok) {
+                        throw new Error("生成Markdown文件失败");
+                    }
+
+                    const result = await response.json();
+                    
+                    if (result.success && result.download_url) {
+                        const downloadLink = this.elements.downloadLink;
+                        // 添加服务器地址前缀
+                        const serverUrl = 'http://localhost:9000';
+                        downloadLink.href = `${serverUrl}${result.download_url}`;
+                        downloadLink.textContent = "下载处理结果";
+                        downloadLink.style.display = "inline-block";
+                    }
+                } catch (error) {
+                    alert(error.message || "生成Markdown文件失败，请重试");
+                }
+            }
         }
+
+        // 初始化文件处理器
+        const fileHandler = new FileHandler();
     </script>
 </body>
 </html>
