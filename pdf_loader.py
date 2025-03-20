@@ -98,7 +98,6 @@ def process_document(file_path):
     mindmap_image_path = generator.export_image()
     print("✅ 思维导图生成完成")
     
-    '''
     print("\n🔄 开始生成翻译...")
     translator = DocumentTranslator(client)
     translation = translator.translate_text(full_text)
@@ -132,6 +131,7 @@ def process_document(file_path):
         "reading_comprehension": "reading_comprehension",
         "vocabulary": "vocabulary"
     }
+    '''
     print("\n🎉 文档处理全部完成！")
     return result
 
